@@ -1,0 +1,6 @@
+{
+  "version": "1.0.0",
+  "changelog": "Première version publique du launcher ProjectRer.",
+  "downloadMac": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/launcher-v1.0.0/ProjectRer-Launcher-1.0.0.dmg",
+  "downloadWin": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/launcher-v1.0.0/ProjectRer-Launcher-Setup-1.0.0.exe"
+}
