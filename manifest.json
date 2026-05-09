@@ -1,25 +1,31 @@
 {
-  "version": "1.0.0",
+  "version": "1.1.0",
   "minecraft": "1.19.2",
   "forge": "43.3.0",
   "mods": [
     {
-      "name": "JourneyMap Companion (JCM)",
+      "name": "JCM (Journey's Companion Mod)",
       "filename": "JCM-forge-2.2.0-beta.1+1.19.2.jar",
-      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.0.0/JCM-forge-2.2.0-beta.1%2B1.19.2.jar",
+      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.1.0/JCM-forge-2.2.0-beta.1%2B1.19.2.jar",
       "sha256": "d1e9a257c8d8f63c7dfb596d1ec4a3027b04c25145ccc2c6f9e4f6f4012958fd"
     },
     {
-      "name": "Minecraft Transit Railway (MTR)",
+      "name": "MTR (Minecraft Transit Railway)",
       "filename": "MTR-forge-4.0.4+1.19.2.jar",
-      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.0.0/MTR-forge-4.0.4%2B1.19.2.jar",
+      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.1.0/MTR-forge-4.0.4%2B1.19.2.jar",
       "sha256": "013d49b2128eee16fd19bf381e63cdb3c6dc309240d9061e58d4b014e6d5823f"
     },
     {
       "name": "Controllable",
       "filename": "controllable-0.18.0-1.19.2.jar",
-      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.0.0/controllable-0.18.0-1.19.2.jar",
+      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.1.0/controllable-0.18.0-1.19.2.jar",
       "sha256": ""
+    },
+    {
+      "name": "OptiFine",
+      "filename": "OptiFine_1.19.2_HD_U_H9_MOD.jar",
+      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.1.0/OptiFine_1.19.2_HD_U_H9_MOD.jar",
+      "sha256": "505246118bd453d2944e9e1095f27d134cdd821742d03768b66547c7a9d6db59"
     }
   ]
 }
