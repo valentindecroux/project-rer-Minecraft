@@ -1,0 +1,36 @@
+modLoader = "javafml"
+loaderVersion = "[43,)"
+license = "MIT"
+issueTrackerURL = "https://github.com/valentindecroux/project-rer-Minecraft/issues"
+
+[[mods]]
+    modId = "mtrwebmap"
+    version = "1.0.0"
+    displayName = "MTR Web Map - ProjectRer"
+    description = '''
+Exporte les données du réseau MTR vers GitHub Pages.
+Fournit une commande /map pour accéder à la carte du réseau.
+    '''
+    logoFile = "mtrwebmap.png"
+    authors = "ProjectRer"
+
+[[dependencies.mtrwebmap]]
+    modId = "forge"
+    mandatory = true
+    versionRange = "[43,)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.mtrwebmap]]
+    modId = "minecraft"
+    mandatory = true
+    versionRange = "[1.19.2,1.20)"
+    ordering = "NONE"
+    side = "BOTH"
+
+[[dependencies.mtrwebmap]]
+    modId = "mtr"
+    mandatory = true
+    versionRange = "[4.0,)"
+    ordering = "AFTER"
+    side = "SERVER"
