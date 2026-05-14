@@ -1,0 +1,11 @@
+{
+  "_meta": {
+    "serverName": "ProjectRer",
+    "dimension": "minecraft:overworld",
+    "exportedAt": "1970-01-01T00:00:00Z",
+    "generator": "mtrwebmap-1.0.0"
+  },
+  "stations": [],
+  "routes": [],
+  "dimensions": ["minecraft:overworld"]
+}
