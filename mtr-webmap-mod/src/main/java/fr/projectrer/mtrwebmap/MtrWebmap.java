@@ -14,8 +14,8 @@ public class MtrWebmap {
     public static final Logger LOGGER = LogManager.getLogger("MtrWebMap");
 
     public MtrWebmap() {
-        // Register Forge config
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, WebMapConfig.SERVER_SPEC, "mtrwebmap-server.toml");
+        // Register Forge config (COMMON = stocké dans config/, persiste entre redémarrages)
+        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, WebMapConfig.SERVER_SPEC, "mtrwebmap-server.toml");
 
         // Register event handler
         MinecraftForge.EVENT_BUS.register(new ServerEvents());
