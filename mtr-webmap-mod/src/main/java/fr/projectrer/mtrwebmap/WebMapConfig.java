@@ -41,18 +41,18 @@ public class WebMapConfig {
             .define("repo", "valentindecroux/project-rer-Minecraft");
 
         githubBranch = builder
-            .comment("Branche GitHub où pousser les données (ex: main)")
-            .define("branch", "main");
+            .comment("Branche GitHub où pousser les données — DOIT correspondre à la branche GitHub Pages")
+            .define("branch", "webmap");
 
         githubDataPath = builder
-            .comment("Chemin du fichier JSON dans le dépôt (ex: webmap/data.json)")
-            .define("dataPath", "webmap/data.json");
+            .comment("Chemin du fichier JSON dans le dépôt (racine de la branche webmap)")
+            .define("dataPath", "data.json");
 
         builder.pop().push("webapp");
 
         siteUrl = builder
-            .comment("URL du site GitHub Pages (ex: https://valentindecroux.github.io/project-rer-Minecraft/webmap/)")
-            .define("siteUrl", "https://valentindecroux.github.io/project-rer-Minecraft/webmap/");
+            .comment("URL du site GitHub Pages")
+            .define("siteUrl", "https://valentindecroux.github.io/project-rer-Minecraft/");
 
         serverName = builder
             .comment("Nom du serveur affiché sur la carte (ex: ProjectRer)")
