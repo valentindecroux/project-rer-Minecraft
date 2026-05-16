@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Carte du réseau — ProjectRer</title>
+<style>
+  /* ── Reset & base ─────────────────────────────────────────────── */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #232637;
+    --border: #2e3248;
+    --accent: #4ade80;
+    --accent-dim: #22c55e55;
+    --text: #e2e8f0;
+    --text-muted: #8892aa;
+    --danger: #f87171;
+    --warn: #fbbf24;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,.5);
+  }
+  html, body { height: 100%; background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; font-size: 14px; overflow: hidden; }
+
+  /* ── Layout ───────────────────────────────────────────────────── */
+  #app { display: grid; grid-template-rows: 48px 1fr; height: 100vh; }
+
+  /* ── Header ───────────────────────────────────────────────────── */
+  header {
+    display: flex; align-items: center; gap: 12px;
+    padding: 0 16px; background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    z-index: 10;
+  }
+  header .logo { font-weight: 700; font-size: 16px; color: var(--accent); letter-spacing: .5px; }
+  header .server-name { color: var(--text-muted); font-size: 12px; }
+  header .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 6px var(--accent); flex-shrink: 0; }
+  header .status-dot.offline { background: var(--danger); box-shadow: 0 0 6px var(--danger); }
+  header .last-updated { margin-left: auto; font-size: 11px; color: var(--text-muted); }
+  header .tab-bar { display: flex; gap: 4px; margin-left: 20px; }
+  header .tab { padding: 6px 14px; border-radius: 6px; cursor: pointer; color: var(--text-muted); transition: .15s; font-size: 13px; }
+  header .tab:hover { background: var(--surface2); color: var(--text); }
+  header .tab.active { background: var(--accent-dim); color: var(--accent); font-weight: 600; }
+
+  /* ── Main panels ─────────────────────────────────────────────── */
+  main { display: grid; grid-template-columns: 320px 1fr; overflow: hidden; }
+
+  /* Sidebar */
+  aside { background: var(--surface); border-right: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+  .panel { display: none; flex-direction: column; height: 100%; overflow: hidden; }
+  .panel.active { display: flex; }
+
+  .panel-header { padding: 14px 16px 10px; border-bottom: 1px solid var(--border); }
+  .panel-header h2 { font-size: 14px; font-weight: 600; }
+  .panel-header p { font-size: 12px; color: var(--text-muted); margin-top: 3px; }
+
+  /* Search box */
+  .search-wrap { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .search-wrap input {
+    width: 100%; padding: 8px 12px; background: var(--surface2);
+    border: 1px solid var(--border); border-radius: 8px; color: var(--text);
+    font-size: 13px; outline: none; transition: border .15s;
+  }
+  .search-wrap input:focus { border-color: var(--accent); }
+  .search-wrap input::placeholder { color: var(--text-muted); }
+
+  /* Scrollable list */
+  .scroll-list { flex: 1; overflow-y: auto; padding: 8px 0; }
+  .scroll-list::-webkit-scrollbar { width: 4px; }
+  .scroll-list::-webkit-scrollbar-track { background: transparent; }
+  .scroll-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+
+  /* Station item */
+  .station-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 16px; cursor: pointer; transition: background .1s;
+  }
+  .station-item:hover, .station-item.selected { background: var(--surface2); }
+  .station-item .dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; border: 2px solid rgba(255,255,255,.2); }
+  .station-item .info { flex: 1; min-width: 0; }
+  .station-item .name { font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .station-item .lines { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .line-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 3px; }
+
+  /* Route planner form */
+  .planner-form { padding: 12px; border-bottom: 1px solid var(--border); }
+  .planner-form label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+  .planner-form select {
+    width: 100%; margin: 4px 0 10px; padding: 8px 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px; outline: none;
+  }
+  .planner-form select:focus { border-color: var(--accent); }
+  .btn {
+    width: 100%; padding: 9px; background: var(--accent); color: #0f1117;
+    border: none; border-radius: 8px; font-weight: 700; font-size: 13px;
+    cursor: pointer; transition: opacity .15s;
+  }
+  .btn:hover { opacity: .9; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+
+  /* Itinerary result */
+  .itinerary { padding: 12px; overflow-y: auto; flex: 1; }
+  .itinerary-step {
+    display: flex; gap: 10px; margin-bottom: 12px; position: relative;
+  }
+  .step-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .step-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
+  .step-connector { width: 2px; flex: 1; min-height: 16px; margin: 2px 0; }
+  .step-content { flex: 1; }
+  .step-station { font-size: 13px; font-weight: 600; }
+  .step-action { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .empty-msg { color: var(--text-muted); font-size: 13px; padding: 16px 0; text-align: center; }
+
+  /* Departures panel */
+  .dep-station-info { padding: 12px 16px; background: var(--surface2); margin: 10px 12px; border-radius: 8px; }
+  .dep-station-info .dep-name { font-size: 15px; font-weight: 700; }
+  .dep-station-info .dep-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .dep-group { padding: 0 12px 12px; }
+  .dep-group-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; padding: 6px 0; }
+  .dep-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 7px; margin-bottom: 3px; background: var(--surface2); }
+  .dep-dest { flex: 1; font-size: 13px; }
+  .dep-time { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 50px; text-align: right; }
+  .dep-time.soon { color: var(--warn); }
+  .dep-time.now { color: var(--danger); animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+
+  /* ── Map canvas area ─────────────────────────────────────────── */
+  #map-container {
+    position: relative; overflow: hidden; background: var(--bg);
+    cursor: grab; user-select: none;
+  }
+  #map-container:active { cursor: grabbing; }
+  #map-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; }
+
+  /* Map zoom controls */
+  .zoom-controls {
+    position: absolute; right: 16px; bottom: 16px;
+    display: flex; flex-direction: column; gap: 4px; z-index: 5;
+  }
+  .zoom-btn {
+    width: 36px; height: 36px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text); font-size: 20px; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s; box-shadow: var(--shadow);
+  }
+  .zoom-btn:hover { background: var(--surface2); }
+
+  /* Map legend */
+  .map-legend {
+    position: absolute; left: 16px; bottom: 16px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 10px 14px; z-index: 5;
+    box-shadow: var(--shadow); max-width: 180px;
+  }
+  .map-legend h4 { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 7px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; font-size: 12px; }
+  .legend-line { width: 24px; height: 3px; border-radius: 2px; }
+
+  /* Loading / error overlay */
+  #overlay {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 12px;
+    background: var(--bg); z-index: 100;
+  }
+  #overlay.hidden { display: none; }
+  .spinner { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  #overlay p { color: var(--text-muted); font-size: 13px; }
+  #overlay .err { color: var(--danger); font-size: 13px; text-align: center; max-width: 300px; }
+  #overlay .retry-btn { padding: 8px 20px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); cursor: pointer; }
+
+  /* Tooltip */
+  #tooltip {
+    position: fixed; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 12px; pointer-events: none;
+    font-size: 12px; z-index: 200; box-shadow: var(--shadow);
+    transform: translate(-50%, -110%); transition: opacity .1s;
+    max-width: 200px;
+  }
+  #tooltip.hidden { opacity: 0; }
+  #tooltip .tt-name { font-weight: 700; font-size: 13px; }
+  #tooltip .tt-lines { color: var(--text-muted); margin-top: 3px; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HEADER -->
+  <header>
+    <div class="status-dot" id="status-dot"></div>
+    <span class="logo">🚉 Carte du réseau</span>
+    <span class="server-name" id="server-name">Chargement...</span>
+    <div class="tab-bar">
+      <div class="tab active" data-tab="map" onclick="switchTab('map')">Carte</div>
+      <div class="tab" data-tab="planner" onclick="switchTab('planner')">Itinéraire</div>
+      <div class="tab" data-tab="departures" onclick="switchTab('departures')">Départs</div>
+      <div class="tab" data-tab="stations" onclick="switchTab('stations')">Stations</div>
+    </div>
+    <span class="last-updated" id="last-updated"></span>
+  </header>
+
+  <!-- MAIN -->
+  <main>
+
+    <!-- ── SIDEBAR ── -->
+    <aside>
+
+      <!-- Carte panel (station list) -->
+      <div class="panel active" id="panel-map">
+        <div class="panel-header">
+          <h2>Toutes les lignes</h2>
+          <p id="summary-text">—</p>
+        </div>
+        <div class="scroll-list" id="lines-list"></div>
+      </div>
+
+      <!-- Itinéraire panel -->
+      <div class="panel" id="panel-planner">
+        <div class="panel-header">
+          <h2>Calculateur d'itinéraire</h2>
+          <p>Trouve le meilleur trajet entre 2 stations</p>
+        </div>
+        <div class="planner-form">
+          <label>Départ</label>
+          <select id="plan-from"></select>
+          <label>Arrivée</label>
+          <select id="plan-to"></select>
+          <button class="btn" onclick="calculateRoute()">Calculer l'itinéraire</button>
+        </div>
+        <div class="itinerary" id="itinerary-result">
+          <p class="empty-msg">Sélectionne une origine et une destination.</p>
+        </div>
+      </div>
+
+      <!-- Départs panel -->
+      <div class="panel" id="panel-departures">
+        <div class="panel-header">
+          <h2>Prochains départs</h2>
+          <p>Sélectionne une station sur la carte</p>
+        </div>
+        <div id="departures-content" style="overflow-y:auto;flex:1;">
+          <p class="empty-msg" style="margin-top:24px">Clique sur une station pour voir ses prochains départs.</p>
+        </div>
+      </div>
+
+      <!-- Stations panel -->
+      <div class="panel" id="panel-stations">
+        <div class="panel-header">
+          <h2>Stations</h2>
+        </div>
+        <div class="search-wrap">
+          <input type="text" id="station-search" placeholder="Rechercher une station..." oninput="filterStations(this.value)">
+        </div>
+        <div class="scroll-list" id="stations-list"></div>
+      </div>
+
+    </aside>
+
+    <!-- ── MAP ── -->
+    <div id="map-container">
+      <svg id="map-svg" xmlns="http://www.w3.org/2000/svg"></svg>
+
+      <div class="zoom-controls">
+        <button class="zoom-btn" onclick="zoomIn()">+</button>
+        <button class="zoom-btn" onclick="zoomOut()">−</button>
+        <button class="zoom-btn" title="Réinitialiser" onclick="resetView()" style="font-size:14px">⌂</button>
+      </div>
+
+      <div class="map-legend" id="map-legend"></div>
+
+      <div id="overlay">
+        <div class="spinner"></div>
+        <p id="overlay-msg">Chargement des données du réseau...</p>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Tooltip -->
+<div id="tooltip" class="hidden">
+  <div class="tt-name" id="tt-name"></div>
+  <div class="tt-lines" id="tt-lines"></div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════════
+// CONFIG — modifier si besoin
+// ═══════════════════════════════════════════════════════════════════
+
+const CONFIG = {
+  // URL du fichier data.json (raw GitHub ou chemin relatif)
+  dataUrl: './data.json',
+  // Intervalle de rafraîchissement en ms (0 = pas de refresh auto)
+  refreshInterval: 60_000,
+  // Vitesse estimée inter-stations si non disponible (ms)
+  defaultTravelTime: 60_000,
+  // Temps d'arrêt par défaut en ms
+  defaultDwellTime: 20_000,
+};
+
+// ═══════════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════════
+
+let DATA = null;          // parsed data.json
+let MAP_STATE = {
+  tx: 0, ty: 0, scale: 1,
+  dragging: false, lastX: 0, lastY: 0,
+  svgW: 0, svgH: 0,
+};
+let selectedStation = null;
+let depInterval = null;
+
+// ═══════════════════════════════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════════════════════════════
+
+async function loadData() {
+  showOverlay('Chargement des données...', false);
+  try {
+    const res = await fetch(CONFIG.dataUrl + '?t=' + Date.now());
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    DATA = await res.json();
+    processData();
+    renderAll();
+    hideOverlay();
+    updateHeader();
+  } catch (e) {
+    showOverlay(null, true, `Impossible de charger les données.\n${e.message}`);
+  }
+}
+
+function processData() {
+  // Build lookup maps
+  DATA._stationMap = {};
+  DATA._routeMap   = {};
+
+  (DATA.stations || []).forEach(s => {
+    DATA._stationMap[s.id] = s;
+    // Collect which routes pass through this station
+    s._routes = [];
+  });
+
+  (DATA.routes || []).forEach(r => {
+    DATA._routeMap[r.id] = r;
+    // Link stations ↔ routes
+    (r.platforms || []).forEach(p => {
+      const st = DATA._stationMap[p.stationId];
+      if (st && !st._routes.includes(r.id)) {
+        st._routes.push(r.id);
+      }
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// RENDER ALL
+// ═══════════════════════════════════════════════════════════════════
+
+function renderAll() {
+  buildMap();
+  buildLinesList();
+  buildStationsList();
+  buildPlannerSelects();
+  buildLegend();
+}
+
+// ── MAP ──────────────────────────────────────────────────────────
+
+function buildMap() {
+  const svg = document.getElementById('map-svg');
+  svg.innerHTML = '';
+
+  const stations = DATA.stations || [];
+  const routes   = DATA.routes   || [];
+
+  if (stations.length === 0) {
+    svg.innerHTML = `<text x="50%" y="50%" text-anchor="middle" fill="#8892aa" font-size="16">
+      Aucune station trouvée dans les données.</text>`;
+    return;
+  }
+
+  // Compute bounding box from Minecraft X,Z → map X,Y
+  const xs = stations.map(s => s.x || 0);
+  const zs = stations.map(s => s.z || 0);
+  const minX = Math.min(...xs), maxX = Math.max(...xs);
+  const minZ = Math.min(...zs), maxZ = Math.max(...zs);
+  const rangeX = maxX - minX || 1;
+  const rangeZ = maxZ - minZ || 1;
+
+  const PADDING = 80;
+  const containerEl = document.getElementById('map-container');
+  const W = containerEl.clientWidth  || 800;
+  const H = containerEl.clientHeight || 600;
+  const drawW = W - PADDING * 2;
+  const drawH = H - PADDING * 2;
+
+  const toSvgX = mc_x => PADDING + ((mc_x - minX) / rangeX) * drawW;
+  const toSvgY = mc_z => PADDING + ((mc_z - minZ) / rangeZ) * drawH;
+
+  // Store for hover/click
+  DATA._toSvgX = toSvgX;
+  DATA._toSvgY = toSvgY;
+  MAP_STATE.svgW = W;
+  MAP_STATE.svgH = H;
+
+  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+
+  // ── Draw route lines ────────────────────────────────────────────
+  const linesGroup = createSvgEl('g', { class: 'lines' });
+  routes.forEach(route => {
+    if (route.hidden) return;
+    const color = colorFromInt(route.color) || '#aaa';
+    const platforms = route.platforms || [];
+    const pts = platforms
+      .map(p => DATA._stationMap[p.stationId])
+      .filter(Boolean)
+      .map(s => `${toSvgX(s.x || 0)},${toSvgY(s.z || 0)}`);
+
+    if (pts.length < 2) return;
+
+    const polyline = createSvgEl('polyline', {
+      points: pts.join(' '),
+      stroke: color,
+      'stroke-width': '4',
+      fill: 'none',
+      'stroke-linecap': 'round',
+      'stroke-linejoin': 'round',
+      opacity: '0.85',
+    });
+    linesGroup.appendChild(polyline);
+
+    // Circular route — close the loop
+    if (route.circularState === 'CIRCLE') {
+      const first = platforms[0] && DATA._stationMap[platforms[0].stationId];
+      const last  = platforms[platforms.length-1] && DATA._stationMap[platforms[platforms.length-1].stationId];
+      if (first && last) {
+        const line = createSvgEl('line', {
+          x1: toSvgX(last.x||0), y1: toSvgY(last.z||0),
+          x2: toSvgX(first.x||0), y2: toSvgY(first.z||0),
+          stroke: color, 'stroke-width': '4', 'stroke-dasharray': '6,4', opacity: '.6'
+        });
+        linesGroup.appendChild(line);
+      }
+    }
+  });
+  svg.appendChild(linesGroup);
+
+  // ── Draw station circles ────────────────────────────────────────
+  const stationsGroup = createSvgEl('g', { class: 'stations' });
+  stations.forEach(st => {
+    const cx = toSvgX(st.x || 0);
+    const cy = toSvgY(st.z || 0);
+    const color = colorFromInt(st.color) || '#fff';
+    const isInterchange = st._routes.length > 1;
+    const r = isInterchange ? 8 : 6;
+
+    const g = createSvgEl('g', {
+      transform: `translate(${cx},${cy})`,
+      class: 'station-node',
+      'data-id': st.id,
+      cursor: 'pointer',
+    });
+
+    // Outer ring
+    g.appendChild(createSvgEl('circle', {
+      r: r + 2, fill: '#1a1d27', stroke: color,
+      'stroke-width': isInterchange ? 2.5 : 2, opacity: '.9'
+    }));
+    // Inner fill
+    g.appendChild(createSvgEl('circle', { r: r - 1, fill: color, opacity: '.85' }));
+
+    // Label (only if not too crowded)
+    if (stations.length < 120) {
+      const label = createSvgEl('text', {
+        x: '0', y: -(r + 6),
+        'text-anchor': 'middle',
+        fill: '#e2e8f0',
+        'font-size': '10',
+        'font-family': 'Segoe UI, system-ui, sans-serif',
+        'pointer-events': 'none',
+      });
+      label.textContent = st.name;
+      g.appendChild(label);
+    }
+
+    // Events
+    g.addEventListener('mouseenter', e => showTooltip(e, st));
+    g.addEventListener('mouseleave', hideTooltip);
+    g.addEventListener('click', () => selectStation(st));
+
+    stationsGroup.appendChild(g);
+  });
+  svg.appendChild(stationsGroup);
+
+  // Init pan/zoom
+  initPanZoom();
+  resetView();
+}
+
+// ── LINES SIDEBAR ────────────────────────────────────────────────
+
+function buildLinesList() {
+  const el = document.getElementById('lines-list');
+  el.innerHTML = '';
+  const routes = DATA.routes || [];
+  const visible = routes.filter(r => !r.hidden);
+
+  document.getElementById('summary-text').textContent =
+    `${visible.length} ligne${visible.length>1?'s':''} · ${(DATA.stations||[]).length} stations`;
+
+  visible.forEach(route => {
+    const color = colorFromInt(route.color) || '#aaa';
+    const item = document.createElement('div');
+    item.className = 'station-item';
+    item.style.borderLeft = `4px solid ${color}`;
+    item.style.paddingLeft = '12px';
+    item.innerHTML = `
+      <div class="info">
+        <div class="name" style="color:${color};font-weight:600">${escHtml(route.name)}</div>
+        <div class="lines">${(route.platforms||[]).length} arrêts · ${route.routeTypeKey || 'train'}</div>
+      </div>`;
+    item.onclick = () => highlightRoute(route);
+    el.appendChild(item);
+  });
+}
+
+// ── STATIONS SIDEBAR ─────────────────────────────────────────────
+
+function buildStationsList() {
+  renderStationsList(DATA.stations || []);
+}
+
+function renderStationsList(list) {
+  const el = document.getElementById('stations-list');
+  el.innerHTML = '';
+  list.forEach(st => {
+    const color = colorFromInt(st.color) || '#fff';
+    const routeNames = (st._routes || [])
+      .map(rid => DATA._routeMap[rid])
+      .filter(Boolean)
+      .map(r => `<span class="line-badge" style="background:${colorFromInt(r.color)}22;color:${colorFromInt(r.color)}">${escHtml(r.name)}</span>`)
+      .join('');
+
+    const item = document.createElement('div');
+    item.className = 'station-item';
+    item.innerHTML = `
+      <div class="dot" style="background:${color}"></div>
+      <div class="info">
+        <div class="name">${escHtml(st.name)}</div>
+        <div class="lines">${routeNames || '<span style="color:var(--text-muted)">Aucune ligne</span>'}</div>
+      </div>`;
+    item.onclick = () => { selectStation(st); switchTab('departures'); };
+    el.appendChild(item);
+  });
+}
+
+function filterStations(q) {
+  if (!DATA) return;
+  const lq = q.toLowerCase();
+  const filtered = (DATA.stations || []).filter(s => s.name.toLowerCase().includes(lq));
+  renderStationsList(filtered);
+}
+
+// ── PLANNER ──────────────────────────────────────────────────────
+
+function buildPlannerSelects() {
+  const stations = (DATA.stations || []).slice().sort((a,b) => a.name.localeCompare(b.name));
+  ['plan-from', 'plan-to'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = '<option value="">— Choisir une station —</option>';
+    stations.forEach(st => {
+      const opt = document.createElement('option');
+      opt.value = st.id;
+      opt.textContent = st.name;
+      sel.appendChild(opt);
+    });
+  });
+}
+
+function calculateRoute() {
+  const fromId = document.getElementById('plan-from').value;
+  const toId   = document.getElementById('plan-to').value;
+  const res    = document.getElementById('itinerary-result');
+
+  if (!fromId || !toId) { res.innerHTML = '<p class="empty-msg">Sélectionne départ et arrivée.</p>'; return; }
+  if (fromId === toId)  { res.innerHTML = '<p class="empty-msg">Départ = Arrivée 😅</p>'; return; }
+
+  const path = dijkstra(fromId, toId);
+  if (!path) {
+    res.innerHTML = '<p class="empty-msg">Aucun itinéraire trouvé entre ces stations.</p>';
+    return;
+  }
+  renderItinerary(path, res);
+}
+
+function dijkstra(fromId, toId) {
+  // Build graph: node = stationId, edges = routes between consecutive platforms
+  const routes = DATA.routes || [];
+  const adj = {};  // stationId -> [{to, routeId, time}]
+
+  routes.forEach(route => {
+    if (route.hidden) return;
+    const plats = route.platforms || [];
+    for (let i = 0; i < plats.length - 1; i++) {
+      const a = plats[i].stationId;
+      const b = plats[i+1].stationId;
+      if (!a || !b) continue;
+      const time = (plats[i].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
+      if (!adj[a]) adj[a] = [];
+      if (!adj[b]) adj[b] = [];
+      adj[a].push({ to: b, routeId: route.id, time });
+      adj[b].push({ to: a, routeId: route.id, time });
+    }
+    // Add transfer edges (within station between routes) — free but small cost
+    const allStations = [...new Set(plats.map(p => p.stationId).filter(Boolean))];
+    allStations.forEach(s => {
+      if (!adj[s]) adj[s] = [];
+    });
+  });
+
+  // Add transfer edges between routes at same station
+  (DATA.stations || []).forEach(st => {
+    const routes_here = st._routes || [];
+    if (routes_here.length < 2) return;
+    // All pairs — free transfer cost
+    if (!adj[st.id]) adj[st.id] = [];
+    // Transfers are implicit — already handled as same node
+  });
+
+  // Dijkstra
+  const dist = { [fromId]: 0 };
+  const prev = {};
+  const prevRoute = {};
+  const visited = new Set();
+  const queue = [{ id: fromId, d: 0 }];
+
+  while (queue.length) {
+    queue.sort((a,b) => a.d - b.d);
+    const { id, d } = queue.shift();
+    if (visited.has(id)) continue;
+    visited.add(id);
+    if (id === toId) break;
+
+    (adj[id] || []).forEach(({ to, routeId, time }) => {
+      const nd = d + time;
+      if (dist[to] === undefined || nd < dist[to]) {
+        dist[to] = nd;
+        prev[to] = id;
+        prevRoute[to] = routeId;
+        queue.push({ id: to, d: nd });
+      }
+    });
+  }
+
+  if (dist[toId] === undefined) return null;
+
+  // Reconstruct path
+  const path = [];
+  let cur = toId;
+  while (cur) {
+    path.unshift({ stationId: cur, routeId: prevRoute[cur] || null });
+    cur = prev[cur];
+  }
+  return path;
+}
+
+function renderItinerary(path, container) {
+  container.innerHTML = '';
+  if (!path || path.length === 0) return;
+
+  let currentRoute = null;
+  let boardAt = null;
+
+  const steps = [];
+
+  path.forEach((node, i) => {
+    const st = DATA._stationMap[node.stationId];
+    const route = node.routeId ? DATA._routeMap[node.routeId] : null;
+
+    if (i === 0) {
+      steps.push({ type: 'origin', station: st });
+      currentRoute = route;
+      boardAt = st;
+      return;
+    }
+
+    if (route && route.id !== (currentRoute && currentRoute.id)) {
+      // Transfer
+      if (currentRoute) {
+        steps.push({ type: 'ride', route: currentRoute, from: boardAt, to: st });
+      }
+      steps.push({ type: 'transfer', station: st, fromRoute: currentRoute, toRoute: route });
+      currentRoute = route;
+      boardAt = st;
+    }
+
+    if (i === path.length - 1) {
+      steps.push({ type: 'ride', route: currentRoute, from: boardAt, to: st });
+      steps.push({ type: 'destination', station: st });
+    }
+  });
+
+  steps.forEach((step, i) => {
+    const div = document.createElement('div');
+    div.className = 'itinerary-step';
+
+    const color = step.route ? (colorFromInt(step.route.color) || '#4ade80')
+                : step.station ? (colorFromInt(step.station.color) || '#4ade80')
+                : '#4ade80';
+
+    const lineEl = document.createElement('div');
+    lineEl.className = 'step-line';
+    const dot = document.createElement('div');
+    dot.className = 'step-dot';
+    dot.style.borderColor = color;
+    dot.style.background = color;
+    lineEl.appendChild(dot);
+
+    if (i < steps.length - 1) {
+      const conn = document.createElement('div');
+      conn.className = 'step-connector';
+      conn.style.background = color;
+      lineEl.appendChild(conn);
+    }
+
+    const content = document.createElement('div');
+    content.className = 'step-content';
+
+    if (step.type === 'origin') {
+      content.innerHTML = `<div class="step-station">${escHtml(step.station.name)}</div>
+        <div class="step-action">📍 Point de départ</div>`;
+    } else if (step.type === 'ride') {
+      content.innerHTML = `<div class="step-station" style="color:${color}">${escHtml(step.route.name)}</div>
+        <div class="step-action">Direction ${escHtml(step.to.name)}</div>`;
+    } else if (step.type === 'transfer') {
+      content.innerHTML = `<div class="step-station">${escHtml(step.station.name)}</div>
+        <div class="step-action">🔄 Correspondance</div>`;
+    } else if (step.type === 'destination') {
+      content.innerHTML = `<div class="step-station">${escHtml(step.station.name)}</div>
+        <div class="step-action">🏁 Destination</div>`;
+    }
+
+    div.appendChild(lineEl);
+    div.appendChild(content);
+    container.appendChild(div);
+  });
+}
+
+// ── DEPARTURES ───────────────────────────────────────────────────
+
+function selectStation(st) {
+  selectedStation = st;
+
+  // Highlight on map
+  document.querySelectorAll('.station-node').forEach(g => {
+    g.classList.remove('selected');
+    const circles = g.querySelectorAll('circle');
+    circles.forEach(c => c.setAttribute('opacity', '.7'));
+  });
+  const node = document.querySelector(`[data-id="${st.id}"]`);
+  if (node) {
+    node.classList.add('selected');
+    node.querySelectorAll('circle').forEach(c => c.setAttribute('opacity', '1'));
+  }
+
+  renderDepartures(st);
+}
+
+function renderDepartures(st) {
+  const container = document.getElementById('departures-content');
+  container.innerHTML = '';
+
+  const color = colorFromInt(st.color) || '#4ade80';
+  const info = document.createElement('div');
+  info.className = 'dep-station-info';
+  info.innerHTML = `
+    <div class="dep-name" style="color:${color}">${escHtml(st.name)}</div>
+    <div class="dep-subtitle">${(st._routes||[]).length} ligne(s) desservant cette station</div>`;
+  container.appendChild(info);
+
+  if ((st._routes || []).length === 0) {
+    container.innerHTML += '<p class="empty-msg">Aucune ligne ne passe par cette station.</p>';
+    return;
+  }
+
+  // For each route, calculate next departures
+  (st._routes || []).forEach(routeId => {
+    const route = DATA._routeMap[routeId];
+    if (!route || route.hidden) return;
+    const routeColor = colorFromInt(route.color) || '#aaa';
+
+    const group = document.createElement('div');
+    group.className = 'dep-group';
+
+    const title = document.createElement('div');
+    title.className = 'dep-group-title';
+    title.innerHTML = `<span style="color:${routeColor}">■</span> ${escHtml(route.name)}`;
+    group.appendChild(title);
+
+    // Find position of this station in the route
+    const platforms = route.platforms || [];
+    const stIdx = platforms.findIndex(p => p.stationId === st.id);
+    if (stIdx < 0) return;
+
+    // Compute next departures based on time simulation
+    const departures = computeNextDepartures(route, stIdx, 4);
+    if (departures.length === 0) {
+      const row = document.createElement('div');
+      row.className = 'dep-row';
+      row.innerHTML = `<span class="dep-dest" style="color:var(--text-muted)">Aucun départ prévu</span>`;
+      group.appendChild(row);
+    } else {
+      departures.forEach(dep => {
+        const row = document.createElement('div');
+        row.className = 'dep-row';
+        const timeClass = dep.minutesAway <= 1 ? 'now' : dep.minutesAway <= 5 ? 'soon' : '';
+        const timeStr = dep.minutesAway <= 0 ? 'En gare' :
+                        dep.minutesAway === 1 ? '1 min' : `${dep.minutesAway} min`;
+        row.innerHTML = `
+          <span class="dep-dest">${escHtml(dep.destination)}</span>
+          <span class="dep-time ${timeClass}">${timeStr}</span>`;
+        group.appendChild(row);
+      });
+    }
+
+    container.appendChild(group);
+  });
+
+  // Refresh every minute
+  if (depInterval) clearInterval(depInterval);
+  depInterval = setInterval(() => {
+    if (selectedStation) renderDepartures(selectedStation);
+  }, 30_000);
+}
+
+function computeNextDepartures(route, fromIdx, count) {
+  const platforms = route.platforms || [];
+  if (fromIdx >= platforms.length - 1) return []; // Last stop, no more departures
+
+  // Get destination (last station)
+  const lastPlatform = platforms[platforms.length - 1];
+  const destSt = DATA._stationMap[lastPlatform.stationId];
+  const destName = destSt ? destSt.name : 'Terminus';
+
+  // Compute travel time to fromIdx
+  let timeToStation = 0;
+  for (let i = 0; i < fromIdx; i++) {
+    timeToStation += (platforms[i].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
+  }
+
+  // Use depot frequency if available
+  const frequency = route._frequency || 300_000; // default 5 min
+  const now = Date.now() % (24 * 60 * 60 * 1000); // ms since midnight
+
+  const results = [];
+  // Generate several train instances
+  for (let train = 0; train < 20 && results.length < count; train++) {
+    const trainStart = (train * frequency) % (24 * 60 * 60 * 1000);
+    const arrivalAtStation = trainStart + timeToStation;
+    let diff = arrivalAtStation - now;
+    if (diff < 0) diff += 24 * 60 * 60 * 1000;
+    if (diff < 0) continue;
+    const minutesAway = Math.round(diff / 60_000);
+    if (minutesAway > 60) continue;
+    results.push({ destination: destName, minutesAway });
+  }
+  results.sort((a,b) => a.minutesAway - b.minutesAway);
+  return results.slice(0, count);
+}
+
+// ── LEGEND ───────────────────────────────────────────────────────
+
+function buildLegend() {
+  const el = document.getElementById('map-legend');
+  const routes = (DATA.routes || []).filter(r => !r.hidden).slice(0, 8);
+  if (routes.length === 0) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.innerHTML = '<h4>Légende</h4>';
+  routes.forEach(r => {
+    const color = colorFromInt(r.color) || '#aaa';
+    el.innerHTML += `<div class="legend-item">
+      <div class="legend-line" style="background:${color}"></div>
+      <span>${escHtml(r.name)}</span>
+    </div>`;
+  });
+}
+
+// ── HIGHLIGHT ROUTE ──────────────────────────────────────────────
+
+function highlightRoute(route) {
+  // Dim all, highlight this route's stations
+  document.querySelectorAll('.lines polyline, .lines line').forEach(el => {
+    el.style.opacity = '.15';
+  });
+  document.querySelectorAll('.station-node circle').forEach(c => {
+    c.style.opacity = '.3';
+  });
+
+  // Re-highlight after 2 seconds
+  setTimeout(() => {
+    document.querySelectorAll('.lines polyline, .lines line').forEach(el => el.style.opacity = '');
+    document.querySelectorAll('.station-node circle').forEach(c => c.style.opacity = '');
+  }, 2000);
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// PAN / ZOOM
+// ═══════════════════════════════════════════════════════════════════
+
+function initPanZoom() {
+  const container = document.getElementById('map-container');
+  const svg = document.getElementById('map-svg');
+
+  container.addEventListener('mousedown', e => {
+    if (e.button !== 0) return;
+    MAP_STATE.dragging = true;
+    MAP_STATE.lastX = e.clientX;
+    MAP_STATE.lastY = e.clientY;
+  });
+  window.addEventListener('mousemove', e => {
+    if (!MAP_STATE.dragging) return;
+    MAP_STATE.tx += e.clientX - MAP_STATE.lastX;
+    MAP_STATE.ty += e.clientY - MAP_STATE.lastY;
+    MAP_STATE.lastX = e.clientX;
+    MAP_STATE.lastY = e.clientY;
+    applyTransform();
+  });
+  window.addEventListener('mouseup', () => MAP_STATE.dragging = false);
+
+  container.addEventListener('wheel', e => {
+    e.preventDefault();
+    const rect = container.getBoundingClientRect();
+    const mx = e.clientX - rect.left;
+    const my = e.clientY - rect.top;
+    const factor = e.deltaY < 0 ? 1.15 : 0.87;
+    const newScale = Math.max(0.2, Math.min(8, MAP_STATE.scale * factor));
+    MAP_STATE.tx = mx - (mx - MAP_STATE.tx) * (newScale / MAP_STATE.scale);
+    MAP_STATE.ty = my - (my - MAP_STATE.ty) * (newScale / MAP_STATE.scale);
+    MAP_STATE.scale = newScale;
+    applyTransform();
+  }, { passive: false });
+}
+
+function applyTransform() {
+  const svg = document.getElementById('map-svg');
+  const g = svg.firstElementChild;
+  if (g) {
+    svg.style.transform = `translate(${MAP_STATE.tx}px, ${MAP_STATE.ty}px) scale(${MAP_STATE.scale})`;
+    svg.style.transformOrigin = '0 0';
+  }
+}
+
+function zoomIn()  { const c = document.getElementById('map-container'); zoomAt(c.clientWidth/2, c.clientHeight/2, 1.25); }
+function zoomOut() { const c = document.getElementById('map-container'); zoomAt(c.clientWidth/2, c.clientHeight/2, 0.8); }
+
+function zoomAt(mx, my, factor) {
+  const newScale = Math.max(0.2, Math.min(8, MAP_STATE.scale * factor));
+  MAP_STATE.tx = mx - (mx - MAP_STATE.tx) * (newScale / MAP_STATE.scale);
+  MAP_STATE.ty = my - (my - MAP_STATE.ty) * (newScale / MAP_STATE.scale);
+  MAP_STATE.scale = newScale;
+  applyTransform();
+}
+
+function resetView() {
+  MAP_STATE.tx = 0;
+  MAP_STATE.ty = 0;
+  MAP_STATE.scale = 1;
+  applyTransform();
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TOOLTIP
+// ═══════════════════════════════════════════════════════════════════
+
+function showTooltip(e, st) {
+  const tt = document.getElementById('tooltip');
+  document.getElementById('tt-name').textContent = st.name;
+  const routeNames = (st._routes||[])
+    .map(rid => DATA._routeMap[rid]?.name).filter(Boolean).join(' · ');
+  document.getElementById('tt-lines').textContent = routeNames || 'Aucune ligne';
+  tt.style.left  = e.clientX + 'px';
+  tt.style.top   = e.clientY + 'px';
+  tt.classList.remove('hidden');
+}
+function hideTooltip() {
+  document.getElementById('tooltip').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════════════════════════════════
+
+function switchTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
+  document.querySelectorAll('.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + name));
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HEADER / OVERLAY
+// ═══════════════════════════════════════════════════════════════════
+
+function updateHeader() {
+  if (!DATA) return;
+  const meta = DATA._meta || {};
+  document.getElementById('server-name').textContent = meta.serverName || 'Serveur inconnu';
+
+  const dot = document.getElementById('status-dot');
+  const exported = meta.exportedAt ? new Date(meta.exportedAt) : null;
+  const ageMin = exported ? Math.floor((Date.now() - exported) / 60_000) : null;
+  const isOnline = ageMin !== null && ageMin < 10;
+  dot.classList.toggle('offline', !isOnline);
+
+  if (exported) {
+    const rel = ageMin === 0 ? 'à l\'instant' : `il y a ${ageMin} min`;
+    document.getElementById('last-updated').textContent = `Mis à jour ${rel}`;
+  }
+
+  document.title = `Carte — ${meta.serverName || 'Réseau'}`;
+}
+
+function showOverlay(msg, isError, errMsg) {
+  const ov = document.getElementById('overlay');
+  ov.classList.remove('hidden');
+  if (isError) {
+    ov.innerHTML = `<div class="err">${escHtml(errMsg || msg)}</div>
+      <button class="retry-btn" onclick="loadData()">Réessayer</button>`;
+  } else {
+    ov.innerHTML = `<div class="spinner"></div><p>${msg}</p>`;
+  }
+}
+function hideOverlay() {
+  document.getElementById('overlay').classList.add('hidden');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════════
+
+function colorFromInt(n) {
+  if (n == null) return null;
+  if (typeof n === 'string' && n.startsWith('#')) return n;
+  const hex = (n >>> 0).toString(16).padStart(6, '0');
+  return '#' + hex.slice(-6);
+}
+
+function escHtml(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+    .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function createSvgEl(tag, attrs = {}) {
+  const el = document.createElementNS('http://www.w3.org/2000/svg', tag);
+  Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+  return el;
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════════════
+
+loadData();
+
+if (CONFIG.refreshInterval > 0) {
+  setInterval(loadData, CONFIG.refreshInterval);
+}
+</script>
+</body>
+</html>
