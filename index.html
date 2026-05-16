@@ -335,24 +335,39 @@ async function loadData() {
 }
 
 function processData() {
+  // Normalise le format API MTR : { code, data:{ stations[], routes[] } }
+  // → format attendu par le site : { stations[], routes[] } à la racine
+  if (!DATA.stations && DATA.data && DATA.data.stations) {
+    const rawRoutes = DATA.data.routes || [];
+    // Coordonnées x,z dans route.stations (absentes du tableau top-level)
+    const coordMap = {};
+    rawRoutes.forEach(route => {
+      (route.stations || []).forEach(rs => {
+        if (rs.x != null && !coordMap[rs.id]) coordMap[rs.id] = { x: rs.x, z: rs.z };
+      });
+    });
+    DATA.stations = (DATA.data.stations || []).map(s => ({
+      id: s.id, name: s.name, color: s.color,
+      x: coordMap[s.id] ? coordMap[s.id].x : 0,
+      z: coordMap[s.id] ? coordMap[s.id].z : 0,
+    }));
+    DATA.routes = rawRoutes.map(r => ({
+      id: r.id, name: r.name, color: r.color,
+      circularState: r.circularState || 'NONE',
+      hidden: r.hidden || false,
+      routeTypeKey: r.type || 'train',
+      platforms: (r.stations || []).map(rs => ({ stationId: rs.id, dwellTime: rs.dwellTime || 0 })),
+    }));
+  }
   // Build lookup maps
   DATA._stationMap = {};
   DATA._routeMap   = {};
-
-  (DATA.stations || []).forEach(s => {
-    DATA._stationMap[s.id] = s;
-    // Collect which routes pass through this station
-    s._routes = [];
-  });
-
+  (DATA.stations || []).forEach(s => { DATA._stationMap[s.id] = s; s._routes = []; });
   (DATA.routes || []).forEach(r => {
     DATA._routeMap[r.id] = r;
-    // Link stations ↔ routes
     (r.platforms || []).forEach(p => {
       const st = DATA._stationMap[p.stationId];
-      if (st && !st._routes.includes(r.id)) {
-        st._routes.push(r.id);
-      }
+      if (st && !st._routes.includes(r.id)) st._routes.push(r.id);
     });
   });
 }
