@@ -688,6 +688,27 @@ function renderItinerary(path, container) {
   container.innerHTML = '';
   if (!path || path.length === 0) return;
 
+  // Calculate total travel time
+  const totalMs = path.reduce((sum, node, i) => {
+    if (i === 0) return sum;
+    const prevId = path[i-1].stationId;
+    const routeId = node.routeId;
+    const route = routeId ? DATA._routeMap[routeId] : null;
+    if (!route) return sum;
+    const plats = route.platforms || [];
+    const aIdx = plats.findIndex(p => p.stationId === prevId);
+    const bIdx = plats.findIndex(p => p.stationId === node.stationId);
+    if (aIdx < 0 || bIdx < 0) return sum;
+    return sum + (plats[aIdx].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
+  }, 0);
+  const totalMin = Math.round(totalMs / 60_000);
+  if (totalMin > 0) {
+    const timeDiv = document.createElement('div');
+    timeDiv.style.cssText = 'padding:10px 12px;margin-bottom:8px;background:var(--accent-dim);border-radius:8px;text-align:center;font-size:13px;';
+    timeDiv.innerHTML = `⏱ Durée estimée : <strong style="color:var(--accent)">${totalMin} min</strong>`;
+    container.appendChild(timeDiv);
+  }
+
   let currentRoute = null;
   let boardAt = null;
 
@@ -855,37 +876,31 @@ function renderDepartures(st) {
 
 function computeNextDepartures(route, fromIdx, count) {
   const platforms = route.platforms || [];
-  if (fromIdx >= platforms.length - 1) return []; // Last stop, no more departures
+  if (fromIdx >= platforms.length - 1) return [];
 
-  // Get destination (last station)
   const lastPlatform = platforms[platforms.length - 1];
   const destSt = DATA._stationMap[lastPlatform.stationId];
   const destName = destSt ? destSt.name : 'Terminus';
 
-  // Compute travel time to fromIdx
+  // Compute cumulative dwell time from start to this platform
   let timeToStation = 0;
   for (let i = 0; i < fromIdx; i++) {
     timeToStation += (platforms[i].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
   }
 
-  // Use depot frequency if available
-  const frequency = route._frequency || 300_000; // default 5 min
-  const now = Date.now() % (24 * 60 * 60 * 1000); // ms since midnight
+  // Frequency: use route data or default 5 min
+  const frequency = route._frequency || 300_000;
+  // Phase in current cycle → time until next train passes this stop
+  const phase = Date.now() % frequency;
+  const msUntilFirst = frequency - phase;
 
   const results = [];
-  // Generate several train instances
-  for (let train = 0; train < 20 && results.length < count; train++) {
-    const trainStart = (train * frequency) % (24 * 60 * 60 * 1000);
-    const arrivalAtStation = trainStart + timeToStation;
-    let diff = arrivalAtStation - now;
-    if (diff < 0) diff += 24 * 60 * 60 * 1000;
-    if (diff < 0) continue;
-    const minutesAway = Math.round(diff / 60_000);
-    if (minutesAway > 60) continue;
+  for (let i = 0; i < count; i++) {
+    const msAway = msUntilFirst + i * frequency;
+    const minutesAway = Math.round(msAway / 60_000);
     results.push({ destination: destName, minutesAway });
   }
-  results.sort((a,b) => a.minutesAway - b.minutesAway);
-  return results.slice(0, count);
+  return results;
 }
 
 // ── LEGEND ───────────────────────────────────────────────────────
