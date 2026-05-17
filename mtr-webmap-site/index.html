@@ -171,12 +171,19 @@
   }
   .dep-dest { flex: 1; font-size: 12px; }
   .dep-dest strong { font-size: 13px; display: block; }
+  .dep-platform { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .dep-platform span { display: inline-block; padding: 1px 5px; background: var(--border); border-radius: 3px; letter-spacing: .3px; }
   .dep-times { text-align: right; }
   .dep-time { font-size: 13px; font-weight: 700; color: var(--accent); }
   .dep-time.soon { color: var(--warn); }
   .dep-time.now { color: var(--danger); animation: pulse 1s infinite; }
   .dep-clock { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .dep-offline-warn {
+    margin: 8px 8px 0; padding: 7px 10px; border-radius: 7px;
+    background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3);
+    font-size: 11px; color: var(--warn); display: flex; align-items: center; gap: 6px;
+  }
 
   /* ── Map canvas area ─────────────────────────────────────────── */
   #map-container {
@@ -1008,12 +1015,30 @@ function renderDepartures(st) {
     </div>`;
   container.appendChild(info);
 
+  // Offline / estimated warning
+  const meta = (DATA && DATA._meta) || {};
+  const exported = meta.exportedAt ? new Date(meta.exportedAt) : null;
+  const ageMin = exported ? Math.floor((Date.now() - exported) / 60_000) : null;
+  if (ageMin === null || ageMin >= 10) {
+    const warn = document.createElement('div');
+    warn.className = 'dep-offline-warn';
+    warn.innerHTML = `⚠️ Serveur hors ligne — départs estimés (données figées)`;
+    container.appendChild(warn);
+  }
+
   if ((st._routes || []).length === 0) {
     container.innerHTML += '<p class="empty-msg">Aucune ligne ne passe par cette station.</p>';
     return;
   }
 
-  (st._routes || []).forEach(routeId => {
+  // Compute platform number (voie) per route at this station
+  const routesAtStation = (st._routes || []).filter(rid => {
+    const r = DATA._routeMap[rid];
+    return r && !r.hidden;
+  });
+
+
+  routesAtStation.forEach((routeId, voieIdx) => {
     const route = DATA._routeMap[routeId];
     if (!route || route.hidden) return;
     const routeColor = colorFromInt(route.color) || '#aaa';
@@ -1021,9 +1046,10 @@ function renderDepartures(st) {
     const group = document.createElement('div');
     group.className = 'dep-group';
 
+    const voieNum = voieIdx + 1;
     const title = document.createElement('div');
     title.className = 'dep-group-title';
-    title.innerHTML = `<div class="dep-group-line" style="background:${routeColor}"></div>${escHtml(route.name)}`;
+    title.innerHTML = `<div class="dep-group-line" style="background:${routeColor}"></div>${escHtml(route.name)}<span style="margin-left:auto;font-size:10px;color:var(--text-muted)">Voie ${voieNum}</span>`;
     group.appendChild(title);
 
     const platforms = route.platforms || [];
@@ -1034,13 +1060,25 @@ function renderDepartures(st) {
     departures.forEach(dep => {
       const row = document.createElement('div');
       row.className = 'dep-row';
-      const minsAway = dep.minutesAway;
-      const timeClass = minsAway <= 1 ? 'now' : minsAway <= 5 ? 'soon' : '';
-      const countdown = minsAway <= 0 ? '🚉 En gare' : minsAway === 1 ? '1 min' : `${minsAway} min`;
-      const clockTime = toFrTime(dep.minutesAway * 60_000, true); // HH:MM:SS
+      const secsAway = dep.secondsAway;
+      const minsAway = Math.floor(secsAway / 60);
+      const remSecs = secsAway % 60;
+      const timeClass = secsAway <= 30 ? 'now' : secsAway <= 300 ? 'soon' : '';
+      let countdown;
+      if (secsAway <= 0) {
+        countdown = '🚉 En gare';
+      } else if (secsAway < 60) {
+        countdown = `${secsAway} sec`;
+      } else if (remSecs === 0) {
+        countdown = `${minsAway} min`;
+      } else {
+        countdown = `${minsAway} min ${remSecs < 10 ? '0' + remSecs : remSecs}`;
+      }
+      const clockTime = toFrTime(secsAway * 1000, true); // HH:MM:SS
       row.innerHTML = `
         <div class="dep-dest">
           <strong>${escHtml(dep.destination)}</strong>
+          <div class="dep-platform"><span>🚂 Voie ${voieNum}</span></div>
         </div>
         <div class="dep-times">
           <div class="dep-time ${timeClass}">${countdown}</div>
@@ -1052,11 +1090,11 @@ function renderDepartures(st) {
     container.appendChild(group);
   });
 
-  // Refresh every 30s
+  // Refresh every 5s to keep seconds live
   if (depInterval) clearInterval(depInterval);
   depInterval = setInterval(() => {
     if (selectedStation) renderDepartures(selectedStation);
-  }, 30_000);
+  }, 5_000);
 }
 
 function computeNextDepartures(route, fromIdx, count) {
@@ -1068,29 +1106,29 @@ function computeNextDepartures(route, fromIdx, count) {
   const destSt = DATA._stationMap[lastPlatform.stationId];
   const destName = destSt ? destSt.name : 'Terminus';
 
-  // Compute travel time to fromIdx
+  // Compute travel time (ms) to fromIdx using actual dwellTimes
   let timeToStation = 0;
   for (let i = 0; i < fromIdx; i++) {
     timeToStation += (platforms[i].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
   }
 
-  // Use depot frequency if available
+  // Use route frequency if available
   const frequency = route._frequency || 300_000; // default 5 min
   const now = Date.now() % (24 * 60 * 60 * 1000); // ms since midnight
 
   const results = [];
-  // Generate several train instances
-  for (let train = 0; train < 20 && results.length < count; train++) {
+  // Try trains 0..39 in both directions (before and after midnight wrap)
+  for (let train = 0; train < 40 && results.length < count; train++) {
     const trainStart = (train * frequency) % (24 * 60 * 60 * 1000);
     const arrivalAtStation = trainStart + timeToStation;
     let diff = arrivalAtStation - now;
     if (diff < 0) diff += 24 * 60 * 60 * 1000;
     if (diff < 0) continue;
-    const minutesAway = Math.round(diff / 60_000);
-    if (minutesAway > 60) continue;
-    results.push({ destination: destName, minutesAway });
+    const secondsAway = Math.round(diff / 1000);
+    if (secondsAway > 3600) continue; // only show within 1 hour
+    results.push({ destination: destName, secondsAway });
   }
-  results.sort((a,b) => a.minutesAway - b.minutesAway);
+  results.sort((a,b) => a.secondsAway - b.secondsAway);
   return results.slice(0, count);
 }
 
