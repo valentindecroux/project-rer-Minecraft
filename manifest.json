@@ -1,5 +1,5 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "minecraft": "1.19.2",
   "forge": "43.3.0",
   "mods": [
@@ -26,6 +26,12 @@
       "filename": "OptiFine_1.19.2_HD_U_H9_MOD.jar",
       "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.1.0/OptiFine_1.19.2_HD_U_H9_MOD.jar",
       "sha256": "505246118bd453d2944e9e1095f27d134cdd821742d03768b66547c7a9d6db59"
+    },
+    {
+      "name": "MTR Web Map",
+      "filename": "mtrwebmap-1.0.0.jar",
+      "url": "https://github.com/valentindecroux/project-rer-Minecraft/releases/download/1.2.0/mtrwebmap-1.0.0.jar",
+      "sha256": ""
     }
   ]
 }
