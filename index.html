@@ -83,48 +83,107 @@
   .station-item .lines { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
   .line-badge { display: inline-block; padding: 1px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; margin-right: 3px; }
 
+  /* ── Autocomplete search input ──────────────────────────────── */
+  .ac-wrap { position: relative; margin: 4px 0 10px; }
+  .ac-wrap input {
+    width: 100%; padding: 10px 12px 10px 36px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 13px; outline: none;
+    transition: border .15s;
+  }
+  .ac-wrap input:focus { border-color: var(--accent); }
+  .ac-wrap input::placeholder { color: var(--text-muted); }
+  .ac-wrap .ac-icon {
+    position: absolute; left: 10px; top: 50%; transform: translateY(-50%);
+    font-size: 14px; pointer-events: none;
+  }
+  .ac-wrap .ac-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; color: var(--text-muted); font-size: 16px; display: none;
+    background: none; border: none; line-height: 1;
+  }
+  .ac-wrap input:not(:placeholder-shown) ~ .ac-clear { display: block; }
+  .ac-dropdown {
+    position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 8px; max-height: 180px; overflow-y: auto;
+    z-index: 50; box-shadow: var(--shadow); display: none;
+  }
+  .ac-dropdown.open { display: block; }
+  .ac-item {
+    display: flex; align-items: center; gap: 8px;
+    padding: 9px 12px; cursor: pointer; font-size: 13px; transition: background .1s;
+  }
+  .ac-item:hover, .ac-item.active { background: var(--surface2); }
+  .ac-item .ac-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+  .ac-item .ac-label { flex: 1; }
+  .ac-item .ac-lines { font-size: 11px; color: var(--text-muted); }
+
   /* Route planner form */
   .planner-form { padding: 12px; border-bottom: 1px solid var(--border); }
   .planner-form label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
-  .planner-form select {
-    width: 100%; margin: 4px 0 10px; padding: 8px 10px;
-    background: var(--surface2); border: 1px solid var(--border);
-    border-radius: 8px; color: var(--text); font-size: 13px; outline: none;
-  }
-  .planner-form select:focus { border-color: var(--accent); }
   .btn {
-    width: 100%; padding: 9px; background: var(--accent); color: #0f1117;
+    width: 100%; padding: 10px; background: var(--accent); color: #0f1117;
     border: none; border-radius: 8px; font-weight: 700; font-size: 13px;
-    cursor: pointer; transition: opacity .15s;
+    cursor: pointer; transition: opacity .15s; display: flex; align-items: center; justify-content: center; gap: 6px;
   }
   .btn:hover { opacity: .9; }
   .btn:disabled { opacity: .4; cursor: not-allowed; }
 
   /* Itinerary result */
   .itinerary { padding: 12px; overflow-y: auto; flex: 1; }
-  .itinerary-step {
-    display: flex; gap: 10px; margin-bottom: 12px; position: relative;
+  .itin-summary {
+    padding: 10px 14px; margin-bottom: 12px;
+    background: var(--accent-dim); border-radius: 10px;
+    display: flex; align-items: center; gap: 10px; font-size: 13px;
   }
-  .step-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
-  .step-dot { width: 12px; height: 12px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
-  .step-connector { width: 2px; flex: 1; min-height: 16px; margin: 2px 0; }
-  .step-content { flex: 1; }
-  .step-station { font-size: 13px; font-weight: 600; }
+  .itin-summary strong { color: var(--accent); font-size: 15px; }
+  .itinerary-step { display: flex; gap: 10px; margin-bottom: 0; position: relative; }
+  .step-line { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; width: 20px; }
+  .step-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid; flex-shrink: 0; }
+  .step-connector { width: 2px; flex: 1; min-height: 20px; margin: 2px 0; }
+  .step-content { flex: 1; padding-bottom: 16px; }
+  .step-station { font-size: 13px; font-weight: 700; }
+  .step-time { font-size: 12px; color: var(--accent); font-weight: 600; margin-top: 1px; }
   .step-action { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+  .step-ride-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 3px 9px; border-radius: 20px; font-size: 12px; font-weight: 700;
+    margin-top: 4px;
+  }
   .empty-msg { color: var(--text-muted); font-size: 13px; padding: 16px 0; text-align: center; }
 
   /* Departures panel */
-  .dep-station-info { padding: 12px 16px; background: var(--surface2); margin: 10px 12px; border-radius: 8px; }
-  .dep-station-info .dep-name { font-size: 15px; font-weight: 700; }
-  .dep-station-info .dep-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
-  .dep-group { padding: 0 12px 12px; }
-  .dep-group-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; padding: 6px 0; }
-  .dep-row { display: flex; align-items: center; gap: 10px; padding: 7px 10px; border-radius: 7px; margin-bottom: 3px; background: var(--surface2); }
-  .dep-dest { flex: 1; font-size: 13px; }
-  .dep-time { font-size: 13px; font-weight: 700; color: var(--accent); min-width: 50px; text-align: right; }
+  .dep-search { padding: 10px 12px; border-bottom: 1px solid var(--border); }
+  .dep-station-info { padding: 10px 12px; background: var(--surface2); margin: 8px; border-radius: 8px; display: flex; align-items: center; gap: 10px; }
+  .dep-station-info .dep-color-bar { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+  .dep-station-info .dep-name { font-size: 14px; font-weight: 700; }
+  .dep-station-info .dep-subtitle { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+  .dep-group { padding: 0 8px 8px; }
+  .dep-group-title {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; padding: 8px 4px 4px;
+  }
+  .dep-group-line { width: 3px; height: 14px; border-radius: 2px; }
+  .dep-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 7px; margin-bottom: 3px; background: var(--surface2);
+  }
+  .dep-dest { flex: 1; font-size: 12px; }
+  .dep-dest strong { font-size: 13px; display: block; }
+  .dep-platform { font-size: 10px; color: var(--text-muted); margin-top: 2px; }
+  .dep-platform span { display: inline-block; padding: 1px 5px; background: var(--border); border-radius: 3px; letter-spacing: .3px; }
+  .dep-times { text-align: right; }
+  .dep-time { font-size: 13px; font-weight: 700; color: var(--accent); }
   .dep-time.soon { color: var(--warn); }
   .dep-time.now { color: var(--danger); animation: pulse 1s infinite; }
+  .dep-clock { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.5} }
+  .dep-offline-warn {
+    margin: 8px 8px 0; padding: 7px 10px; border-radius: 7px;
+    background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.3);
+    font-size: 11px; color: var(--warn); display: flex; align-items: center; gap: 6px;
+  }
 
   /* ── Map canvas area ─────────────────────────────────────────── */
   #map-container {
@@ -221,17 +280,29 @@
       <div class="panel" id="panel-planner">
         <div class="panel-header">
           <h2>Calculateur d'itinéraire</h2>
-          <p>Trouve le meilleur trajet entre 2 stations</p>
+          <p>Inspire de SNCF Connect — recherche rapide</p>
         </div>
         <div class="planner-form">
-          <label>Départ</label>
-          <select id="plan-from"></select>
-          <label>Arrivée</label>
-          <select id="plan-to"></select>
-          <button class="btn" onclick="calculateRoute()">Calculer l'itinéraire</button>
+          <label>🟢 Départ</label>
+          <div class="ac-wrap">
+            <span class="ac-icon">🔍</span>
+            <input type="text" id="plan-from-input" placeholder="Station de départ..." autocomplete="off" oninput="acFilter('from',this.value)" onfocus="acOpen('from')" onblur="acBlur('from')">
+            <button class="ac-clear" onclick="acClear('from')">×</button>
+            <div class="ac-dropdown" id="ac-from-list"></div>
+          </div>
+          <label>🔴 Arrivée</label>
+          <div class="ac-wrap">
+            <span class="ac-icon">🔍</span>
+            <input type="text" id="plan-to-input" placeholder="Station d'arrivée..." autocomplete="off" oninput="acFilter('to',this.value)" onfocus="acOpen('to')" onblur="acBlur('to')">
+            <button class="ac-clear" onclick="acClear('to')">×</button>
+            <div class="ac-dropdown" id="ac-to-list"></div>
+          </div>
+          <input type="hidden" id="plan-from" value="">
+          <input type="hidden" id="plan-to" value="">
+          <button class="btn" onclick="calculateRoute()">🗺 Calculer l'itinéraire</button>
         </div>
         <div class="itinerary" id="itinerary-result">
-          <p class="empty-msg">Sélectionne une origine et une destination.</p>
+          <p class="empty-msg">Cherche une station de départ et d'arrivée.</p>
         </div>
       </div>
 
@@ -239,10 +310,18 @@
       <div class="panel" id="panel-departures">
         <div class="panel-header">
           <h2>Prochains départs</h2>
-          <p>Sélectionne une station sur la carte</p>
+          <p>Horaires en temps réel (fuseau France)</p>
+        </div>
+        <div class="dep-search">
+          <div class="ac-wrap" style="margin:0">
+            <span class="ac-icon">🔍</span>
+            <input type="text" id="dep-search-input" placeholder="Chercher une station..." autocomplete="off" oninput="acFilter('dep',this.value)" onfocus="acOpen('dep')" onblur="acBlur('dep')">
+            <button class="ac-clear" onclick="acClear('dep')">×</button>
+            <div class="ac-dropdown" id="ac-dep-list"></div>
+          </div>
         </div>
         <div id="departures-content" style="overflow-y:auto;flex:1;">
-          <p class="empty-msg" style="margin-top:24px">Clique sur une station pour voir ses prochains départs.</p>
+          <p class="empty-msg" style="margin-top:24px">Cherche ou clique une station sur la carte.</p>
         </div>
       </div>
 
@@ -335,39 +414,63 @@ async function loadData() {
 }
 
 function processData() {
-  // Normalise le format API MTR : { code, data:{ stations[], routes[] } }
-  // → format attendu par le site : { stations[], routes[] } à la racine
+  // ── Normalise le format de l'API MTR ──────────────────────────────
+  // L'API MTR retourne : { code, data: { stations[], routes[] } }
+  // Le site attend     : { stations[], routes[] } à la racine
   if (!DATA.stations && DATA.data && DATA.data.stations) {
     const rawRoutes = DATA.data.routes || [];
-    // Coordonnées x,z dans route.stations (absentes du tableau top-level)
+
+    // Les coordonnées x,z sont dans route.stations (pas dans le tableau top-level)
     const coordMap = {};
     rawRoutes.forEach(route => {
       (route.stations || []).forEach(rs => {
-        if (rs.x != null && !coordMap[rs.id]) coordMap[rs.id] = { x: rs.x, z: rs.z };
+        if (rs.x != null && !coordMap[rs.id]) {
+          coordMap[rs.id] = { x: rs.x, z: rs.z };
+        }
       });
     });
+
+    // Stations top-level + injection des coordonnées
     DATA.stations = (DATA.data.stations || []).map(s => ({
-      id: s.id, name: s.name, color: s.color,
+      id: s.id,
+      name: s.name,
+      color: s.color,
       x: coordMap[s.id] ? coordMap[s.id].x : 0,
       z: coordMap[s.id] ? coordMap[s.id].z : 0,
     }));
+
+    // Routes : convertir route.stations → platforms [{stationId, dwellTime}]
     DATA.routes = rawRoutes.map(r => ({
-      id: r.id, name: r.name, color: r.color,
+      id: r.id,
+      name: r.name,
+      color: r.color,
       circularState: r.circularState || 'NONE',
       hidden: r.hidden || false,
       routeTypeKey: r.type || 'train',
-      platforms: (r.stations || []).map(rs => ({ stationId: rs.id, dwellTime: rs.dwellTime || 0 })),
+      platforms: (r.stations || []).map(rs => ({
+        stationId: rs.id,
+        dwellTime: rs.dwellTime || 0,
+      })),
     }));
   }
+  // ─────────────────────────────────────────────────────────────────
+
   // Build lookup maps
   DATA._stationMap = {};
   DATA._routeMap   = {};
-  (DATA.stations || []).forEach(s => { DATA._stationMap[s.id] = s; s._routes = []; });
+
+  (DATA.stations || []).forEach(s => {
+    DATA._stationMap[s.id] = s;
+    s._routes = [];
+  });
+
   (DATA.routes || []).forEach(r => {
     DATA._routeMap[r.id] = r;
     (r.platforms || []).forEach(p => {
       const st = DATA._stationMap[p.stationId];
-      if (st && !st._routes.includes(r.id)) st._routes.push(r.id);
+      if (st && !st._routes.includes(r.id)) {
+        st._routes.push(r.id);
+      }
     });
   });
 }
@@ -503,10 +606,13 @@ function buildMap() {
       g.appendChild(label);
     }
 
+    // Zone de clic invisible élargie (meilleure UX)
+    g.appendChild(createSvgEl('circle', { r: r + 8, fill: 'transparent', 'pointer-events': 'all' }));
+
     // Events
     g.addEventListener('mouseenter', e => showTooltip(e, st));
     g.addEventListener('mouseleave', hideTooltip);
-    g.addEventListener('click', () => selectStation(st));
+    g.addEventListener('click', () => { selectStation(st); switchTab('departures'); });
 
     stationsGroup.appendChild(g);
   });
@@ -581,28 +687,92 @@ function filterStations(q) {
   renderStationsList(filtered);
 }
 
-// ── PLANNER ──────────────────────────────────────────────────────
+// ── AUTOCOMPLETE ─────────────────────────────────────────────────
+
+const _acSelected = { from: null, to: null, dep: null };
 
 function buildPlannerSelects() {
-  const stations = (DATA.stations || []).slice().sort((a,b) => a.name.localeCompare(b.name));
-  ['plan-from', 'plan-to'].forEach(id => {
-    const sel = document.getElementById(id);
-    sel.innerHTML = '<option value="">— Choisir une station —</option>';
-    stations.forEach(st => {
-      const opt = document.createElement('option');
-      opt.value = st.id;
-      opt.textContent = st.name;
-      sel.appendChild(opt);
-    });
-  });
+  // Autocomplete is built dynamically — nothing to do here
 }
+
+function acGetStations(q) {
+  if (!DATA) return [];
+  const lq = q.toLowerCase().trim();
+  const all = (DATA.stations || []).slice().sort((a,b) => a.name.localeCompare(b.name));
+  return lq ? all.filter(s => s.name.toLowerCase().includes(lq)) : all;
+}
+
+function acFilter(role, q) {
+  const list = document.getElementById(`ac-${role}-list`);
+  const stations = acGetStations(q);
+  renderAcList(role, stations, list);
+  list.classList.add('open');
+}
+
+function acOpen(role) {
+  const input = document.getElementById(role === 'dep' ? 'dep-search-input' : `plan-${role}-input`);
+  const list = document.getElementById(`ac-${role}-list`);
+  const stations = acGetStations(input.value);
+  renderAcList(role, stations, list);
+  list.classList.add('open');
+}
+
+function acBlur(role) {
+  // Small delay to allow click to register
+  setTimeout(() => {
+    const list = document.getElementById(`ac-${role}-list`);
+    if (list) list.classList.remove('open');
+  }, 200);
+}
+
+function acClear(role) {
+  const inputId = role === 'dep' ? 'dep-search-input' : `plan-${role}-input`;
+  document.getElementById(inputId).value = '';
+  if (role !== 'dep') document.getElementById(`plan-${role}`).value = '';
+  _acSelected[role] = null;
+}
+
+function renderAcList(role, stations, listEl) {
+  listEl.innerHTML = '';
+  stations.slice(0, 30).forEach(st => {
+    const color = colorFromInt(st.color) || '#aaa';
+    const routeNames = (st._routes || [])
+      .map(rid => DATA._routeMap[rid]?.name).filter(Boolean).slice(0, 3).join(' · ');
+    const item = document.createElement('div');
+    item.className = 'ac-item';
+    item.innerHTML = `<span class="ac-dot" style="background:${color}"></span>
+      <span class="ac-label">${escHtml(st.name)}</span>
+      <span class="ac-lines">${escHtml(routeNames)}</span>`;
+    item.addEventListener('mousedown', () => acSelect(role, st));
+    listEl.appendChild(item);
+  });
+  if (stations.length === 0) {
+    listEl.innerHTML = '<div class="ac-item" style="color:var(--text-muted)">Aucune station trouvée</div>';
+  }
+}
+
+function acSelect(role, st) {
+  _acSelected[role] = st;
+  if (role === 'dep') {
+    document.getElementById('dep-search-input').value = st.name;
+    selectStation(st);
+    switchTab('departures');
+  } else {
+    document.getElementById(`plan-${role}-input`).value = st.name;
+    document.getElementById(`plan-${role}`).value = st.id;
+  }
+  const list = document.getElementById(`ac-${role}-list`);
+  if (list) list.classList.remove('open');
+}
+
+// ── PLANNER ──────────────────────────────────────────────────────
 
 function calculateRoute() {
   const fromId = document.getElementById('plan-from').value;
   const toId   = document.getElementById('plan-to').value;
   const res    = document.getElementById('itinerary-result');
 
-  if (!fromId || !toId) { res.innerHTML = '<p class="empty-msg">Sélectionne départ et arrivée.</p>'; return; }
+  if (!fromId || !toId) { res.innerHTML = '<p class="empty-msg">Cherche une station de départ et d\'arrivée.</p>'; return; }
   if (fromId === toId)  { res.innerHTML = '<p class="empty-msg">Départ = Arrivée 😅</p>'; return; }
 
   const path = dijkstra(fromId, toId);
@@ -684,30 +854,21 @@ function dijkstra(fromId, toId) {
   return path;
 }
 
+// ── HELPERS TEMPS FR ────────────────────────────────────────────
+
+const _frTime = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
+});
+const _frTimeShort = new Intl.DateTimeFormat('fr-FR', {
+  timeZone: 'Europe/Paris', hour: '2-digit', minute: '2-digit', hour12: false
+});
+function toFrTime(msFromNow, withSeconds) {
+  return (withSeconds ? _frTime : _frTimeShort).format(new Date(Date.now() + msFromNow));
+}
+
 function renderItinerary(path, container) {
   container.innerHTML = '';
   if (!path || path.length === 0) return;
-
-  // Calculate total travel time
-  const totalMs = path.reduce((sum, node, i) => {
-    if (i === 0) return sum;
-    const prevId = path[i-1].stationId;
-    const routeId = node.routeId;
-    const route = routeId ? DATA._routeMap[routeId] : null;
-    if (!route) return sum;
-    const plats = route.platforms || [];
-    const aIdx = plats.findIndex(p => p.stationId === prevId);
-    const bIdx = plats.findIndex(p => p.stationId === node.stationId);
-    if (aIdx < 0 || bIdx < 0) return sum;
-    return sum + (plats[aIdx].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
-  }, 0);
-  const totalMin = Math.round(totalMs / 60_000);
-  if (totalMin > 0) {
-    const timeDiv = document.createElement('div');
-    timeDiv.style.cssText = 'padding:10px 12px;margin-bottom:8px;background:var(--accent-dim);border-radius:8px;text-align:center;font-size:13px;';
-    timeDiv.innerHTML = `⏱ Durée estimée : <strong style="color:var(--accent)">${totalMin} min</strong>`;
-    container.appendChild(timeDiv);
-  }
 
   let currentRoute = null;
   let boardAt = null;
@@ -741,6 +902,33 @@ function renderItinerary(path, container) {
     }
   });
 
+  // Compute total time and per-step times
+  let elapsed = 0;
+  const stepTimes = [0];
+  steps.forEach((step, i) => {
+    if (step.type === 'ride' && step.route) {
+      const plats = step.route.platforms || [];
+      const fromIdx = plats.findIndex(p => p.stationId === step.from?.id);
+      const toIdx   = plats.findIndex(p => p.stationId === step.to?.id);
+      if (fromIdx >= 0 && toIdx > fromIdx) {
+        for (let j = fromIdx; j < toIdx; j++) {
+          elapsed += (plats[j].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
+        }
+      } else {
+        elapsed += CONFIG.defaultTravelTime;
+      }
+    }
+    stepTimes.push(elapsed);
+  });
+  const totalMin = Math.round(elapsed / 60_000);
+
+  // Summary banner
+  const summary = document.createElement('div');
+  summary.className = 'itin-summary';
+  summary.innerHTML = `<span>⏱</span> <span>Durée estimée : <strong>${totalMin} min</strong></span>
+    <span style="margin-left:auto;color:var(--text-muted);font-size:11px">Départ : ${toFrTime(0)} · Arrivée : ${toFrTime(elapsed)}</span>`;
+  container.appendChild(summary);
+
   steps.forEach((step, i) => {
     const div = document.createElement('div');
     div.className = 'itinerary-step';
@@ -754,30 +942,35 @@ function renderItinerary(path, container) {
     const dot = document.createElement('div');
     dot.className = 'step-dot';
     dot.style.borderColor = color;
-    dot.style.background = color;
+    dot.style.background = step.type === 'ride' ? 'transparent' : color;
     lineEl.appendChild(dot);
 
     if (i < steps.length - 1) {
       const conn = document.createElement('div');
       conn.className = 'step-connector';
       conn.style.background = color;
+      conn.style.opacity = step.type === 'ride' ? '0.6' : '1';
       lineEl.appendChild(conn);
     }
 
     const content = document.createElement('div');
     content.className = 'step-content';
+    const timeStr = `<div class="step-time">${toFrTime(stepTimes[i])}</div>`;
 
     if (step.type === 'origin') {
-      content.innerHTML = `<div class="step-station">${escHtml(step.station.name)}</div>
-        <div class="step-action">📍 Point de départ</div>`;
+      content.innerHTML = `${timeStr}<div class="step-station">${escHtml(step.station?.name)}</div>
+        <div class="step-action">🟢 Point de départ</div>`;
     } else if (step.type === 'ride') {
-      content.innerHTML = `<div class="step-station" style="color:${color}">${escHtml(step.route.name)}</div>
-        <div class="step-action">Direction ${escHtml(step.to.name)}</div>`;
+      const rColor = colorFromInt(step.route?.color) || '#aaa';
+      content.innerHTML = `<div class="step-ride-badge" style="background:${rColor}22;color:${rColor}">
+        <span>🚆</span><span>${escHtml(step.route?.name)}</span>
+      </div>
+      <div class="step-action" style="margin-top:4px">Direction <strong>${escHtml(step.to?.name)}</strong></div>`;
     } else if (step.type === 'transfer') {
-      content.innerHTML = `<div class="step-station">${escHtml(step.station.name)}</div>
+      content.innerHTML = `${timeStr}<div class="step-station">${escHtml(step.station?.name)}</div>
         <div class="step-action">🔄 Correspondance</div>`;
     } else if (step.type === 'destination') {
-      content.innerHTML = `<div class="step-station">${escHtml(step.station.name)}</div>
+      content.innerHTML = `${timeStr}<div class="step-station">${escHtml(step.station?.name)}</div>
         <div class="step-action">🏁 Destination</div>`;
     }
 
@@ -815,17 +1008,37 @@ function renderDepartures(st) {
   const info = document.createElement('div');
   info.className = 'dep-station-info';
   info.innerHTML = `
-    <div class="dep-name" style="color:${color}">${escHtml(st.name)}</div>
-    <div class="dep-subtitle">${(st._routes||[]).length} ligne(s) desservant cette station</div>`;
+    <div class="dep-color-bar" style="background:${color}"></div>
+    <div>
+      <div class="dep-name">${escHtml(st.name)}</div>
+      <div class="dep-subtitle">${(st._routes||[]).length} ligne(s) · Heure locale Paris</div>
+    </div>`;
   container.appendChild(info);
+
+  // Offline / estimated warning
+  const meta = (DATA && DATA._meta) || {};
+  const exported = meta.exportedAt ? new Date(meta.exportedAt) : null;
+  const ageMin = exported ? Math.floor((Date.now() - exported) / 60_000) : null;
+  if (ageMin === null || ageMin >= 10) {
+    const warn = document.createElement('div');
+    warn.className = 'dep-offline-warn';
+    warn.innerHTML = `⚠️ Serveur hors ligne — départs estimés (données figées)`;
+    container.appendChild(warn);
+  }
 
   if ((st._routes || []).length === 0) {
     container.innerHTML += '<p class="empty-msg">Aucune ligne ne passe par cette station.</p>';
     return;
   }
 
-  // For each route, calculate next departures
-  (st._routes || []).forEach(routeId => {
+  // Compute platform number (voie) per route at this station
+  const routesAtStation = (st._routes || []).filter(rid => {
+    const r = DATA._routeMap[rid];
+    return r && !r.hidden;
+  });
+
+
+  routesAtStation.forEach((routeId, voieIdx) => {
     const route = DATA._routeMap[routeId];
     if (!route || route.hidden) return;
     const routeColor = colorFromInt(route.color) || '#aaa';
@@ -833,74 +1046,90 @@ function renderDepartures(st) {
     const group = document.createElement('div');
     group.className = 'dep-group';
 
+    const voieNum = voieIdx + 1;
     const title = document.createElement('div');
     title.className = 'dep-group-title';
-    title.innerHTML = `<span style="color:${routeColor}">■</span> ${escHtml(route.name)}`;
+    title.innerHTML = `<div class="dep-group-line" style="background:${routeColor}"></div>${escHtml(route.name)}<span style="margin-left:auto;font-size:10px;color:var(--text-muted)">Voie ${voieNum}</span>`;
     group.appendChild(title);
 
-    // Find position of this station in the route
     const platforms = route.platforms || [];
     const stIdx = platforms.findIndex(p => p.stationId === st.id);
     if (stIdx < 0) return;
 
-    // Compute next departures based on time simulation
     const departures = computeNextDepartures(route, stIdx, 4);
-    if (departures.length === 0) {
+    departures.forEach(dep => {
       const row = document.createElement('div');
       row.className = 'dep-row';
-      row.innerHTML = `<span class="dep-dest" style="color:var(--text-muted)">Aucun départ prévu</span>`;
+      const secsAway = dep.secondsAway;
+      const minsAway = Math.floor(secsAway / 60);
+      const remSecs = secsAway % 60;
+      const timeClass = secsAway <= 30 ? 'now' : secsAway <= 300 ? 'soon' : '';
+      let countdown;
+      if (secsAway <= 0) {
+        countdown = '🚉 En gare';
+      } else if (secsAway < 60) {
+        countdown = `${secsAway} sec`;
+      } else if (remSecs === 0) {
+        countdown = `${minsAway} min`;
+      } else {
+        countdown = `${minsAway} min ${remSecs < 10 ? '0' + remSecs : remSecs}`;
+      }
+      const clockTime = toFrTime(secsAway * 1000, true); // HH:MM:SS
+      row.innerHTML = `
+        <div class="dep-dest">
+          <strong>${escHtml(dep.destination)}</strong>
+          <div class="dep-platform"><span>🚂 Voie ${voieNum}</span></div>
+        </div>
+        <div class="dep-times">
+          <div class="dep-time ${timeClass}">${countdown}</div>
+          <div class="dep-clock">${clockTime}</div>
+        </div>`;
       group.appendChild(row);
-    } else {
-      departures.forEach(dep => {
-        const row = document.createElement('div');
-        row.className = 'dep-row';
-        const timeClass = dep.minutesAway <= 1 ? 'now' : dep.minutesAway <= 5 ? 'soon' : '';
-        const timeStr = dep.minutesAway <= 0 ? 'En gare' :
-                        dep.minutesAway === 1 ? '1 min' : `${dep.minutesAway} min`;
-        row.innerHTML = `
-          <span class="dep-dest">${escHtml(dep.destination)}</span>
-          <span class="dep-time ${timeClass}">${timeStr}</span>`;
-        group.appendChild(row);
-      });
-    }
+    });
 
     container.appendChild(group);
   });
 
-  // Refresh every minute
+  // Refresh every 5s to keep seconds live
   if (depInterval) clearInterval(depInterval);
   depInterval = setInterval(() => {
     if (selectedStation) renderDepartures(selectedStation);
-  }, 30_000);
+  }, 5_000);
 }
 
 function computeNextDepartures(route, fromIdx, count) {
   const platforms = route.platforms || [];
-  if (fromIdx >= platforms.length - 1) return [];
+  if (fromIdx >= platforms.length - 1) return []; // Last stop, no more departures
 
+  // Get destination (last station)
   const lastPlatform = platforms[platforms.length - 1];
   const destSt = DATA._stationMap[lastPlatform.stationId];
   const destName = destSt ? destSt.name : 'Terminus';
 
-  // Compute cumulative dwell time from start to this platform
+  // Compute travel time (ms) to fromIdx using actual dwellTimes
   let timeToStation = 0;
   for (let i = 0; i < fromIdx; i++) {
     timeToStation += (platforms[i].dwellTime || CONFIG.defaultDwellTime) + CONFIG.defaultTravelTime;
   }
 
-  // Frequency: use route data or default 5 min
-  const frequency = route._frequency || 300_000;
-  // Phase in current cycle → time until next train passes this stop
-  const phase = Date.now() % frequency;
-  const msUntilFirst = frequency - phase;
+  // Use route frequency if available
+  const frequency = route._frequency || 300_000; // default 5 min
+  const now = Date.now() % (24 * 60 * 60 * 1000); // ms since midnight
 
   const results = [];
-  for (let i = 0; i < count; i++) {
-    const msAway = msUntilFirst + i * frequency;
-    const minutesAway = Math.round(msAway / 60_000);
-    results.push({ destination: destName, minutesAway });
+  // Try trains 0..39 in both directions (before and after midnight wrap)
+  for (let train = 0; train < 40 && results.length < count; train++) {
+    const trainStart = (train * frequency) % (24 * 60 * 60 * 1000);
+    const arrivalAtStation = trainStart + timeToStation;
+    let diff = arrivalAtStation - now;
+    if (diff < 0) diff += 24 * 60 * 60 * 1000;
+    if (diff < 0) continue;
+    const secondsAway = Math.round(diff / 1000);
+    if (secondsAway > 3600) continue; // only show within 1 hour
+    results.push({ destination: destName, secondsAway });
   }
-  return results;
+  results.sort((a,b) => a.secondsAway - b.secondsAway);
+  return results.slice(0, count);
 }
 
 // ── LEGEND ───────────────────────────────────────────────────────
